@@ -2,6 +2,10 @@
 [こちらのリポジトリ](https://github.com/ksasao/PlateauCityGmlSharp)をUnityで利用できるよう、Forkしたものです。
 
 
+# 使い方
+
+
+
 
 # 一部のソースコードの引用元はWEBアーカイブより参照できます
 `Assets\DemBldgTranCreator.cs`
@@ -10,3 +14,5 @@
 Triangulator - Unify Community Wiki
 http://wiki.unity3d.com/index.php?title=Triangulator
 https://web.archive.org/web/20210622183655/http://wiki.unity3d.com/index.php?title=Triangulator
+
+
