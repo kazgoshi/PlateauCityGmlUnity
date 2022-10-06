@@ -1,10 +1,29 @@
 # PlateauCityGmlUnity
-[こちらのリポジトリ](https://github.com/ksasao/PlateauCityGmlSharp)をUnityで利用できるよう、Forkしたものです。
-
+[こちらのリポジトリ](https://github.com/ksasao/PlateauCityGmlSharp)をUnityで直接CityGMLのファイルを読み込んで利用できるよう、Forkしたものです。
+追加機能として、地形のテクスチャを地理院地図の画像を自動ダウンロードして使用し、道路(TranのRoad)を生成します。
 
 # 使い方
 
+1. DemBldgTanCreator.csとPlateauCityGMLUnityのフォルダをProjectに追加します。
 
+![スクリプトの追加](img1.png)
+
+2. HierarchyでCreate Emptyで空のゲームオブジェクトを追加します。
+
+3. 追加した空のゲームオブジェクトにDemBldgTanCreator.csを追加します。
+
+4. 追加したスクリプトのインスペクター（Dem Bldg Tran Creater (Script) - Inspector)を開き設定をします。
+　1. gmlデータを置いてあるudxのフォルダーを udxpathに記入します。
+　2. mapindexに生成したい場所のメッシュコードを記入します。
+	3. あとは必要に応じて記入します。
+
+![インスペクタの設定](img2.png)
+
+5. スクリプトのインスペクターの名前を右クリックしてCreateで生成します。生成する内容に応じてしばらく時間がかかります。最初は、試しに地形(DEM)のみが良いと思います。
+
+![生成](img3.png)
+
+![生成結果](img4.png)
 
 
 # 一部のソースコードの引用元はWEBアーカイブより参照できます
