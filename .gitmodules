@@ -1,0 +1,3 @@
+[submodule "PlateauCityGmlSharp"]
+	path = PlateauCityGmlSharp
+	url = git@github.com:ksasao/PlateauCityGmlSharp.git
