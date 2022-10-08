@@ -360,6 +360,7 @@ class UnityModelGenerator : ModelGenerator {
             Texture2D tex = new Texture2D(1, 1);
             tex.LoadImage(result);
             bldgX.GetComponent<Renderer>().material.mainTexture = tex;
+            bldgX.GetComponent<Renderer>().material.shader = Shader.Find ("Unlit/Texture");
 //                bldgX.GetComponent<Renderer>().sharedMaterial.mainTexture = tex;
 
         } else {
