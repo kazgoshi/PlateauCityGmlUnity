@@ -47,7 +47,7 @@ namespace PlateauCityGml
 
             // Vertex[] list を破壊しないようにコピーを作成
             Vertex[] pointList = (Vertex[])list.Clone();
-
+           //Debug.Log("pointList "+pointList.Count());
             Vertex o = pointList[0]; // 3次元空間中の平面上に基準点を設定すべきだがこれで代用
             do
             {
