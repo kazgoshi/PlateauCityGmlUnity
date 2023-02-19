@@ -493,6 +493,7 @@ class UnityModelGenerator :ScriptableObject
                 
                 tex = Resources.Load(loaddirPath+@"\"+fileNameWithoutExtension, typeof(Texture2D)) as Texture2D;
                 material = Resources.Load(loaddirPath+@"\"+fileNameWithoutExtension, typeof(Material)) as Material;  
+                string savefilename =  savedirPath+@"\"+fileNameWithoutExtension+".asset";
                 //if (tex == null || material == null) {
                 if (tex == null ) { // 新規のテクスチャの場合
                     //Debug.Log("Create Material "+loaddirPath);
@@ -511,67 +512,45 @@ class UnityModelGenerator :ScriptableObject
                                 if (tex.height > texsize) texheight = texsize;
                                 tex = GetResized(tex, texwidth, texheight);
                             }
-                            string savefilename =  savedirPath+@"\"+fileNameWithoutExtension+".asset";
                             var assetT = UnityEditor.AssetDatabase.LoadAssetAtPath(savefilename,typeof(Texture));
                             if( assetT == null){
                                 UnityEditor.AssetDatabase.CreateAsset( tex, savefilename);
                             }    
-
-                            // テクスチャを読み込み
-                            //bldgX.GetComponent<Renderer>().material.mainTexture = tex;//
-                            //bldgX.GetComponent<Renderer>().material.shader = Shader.Find ("Unlit/Texture");
-                            var renderer = bldgX.GetComponent<Renderer>();
-                            material = new Material(Shader.Find("Unlit/Texture"));
-                            if (useTexture) {
-
-                                material.mainTexture = tex;//
-                                //         var tempMaterial = new Material(renderer.sharedMaterial);
-                                //material.mainTexture = tex;
-                                renderer.sharedMaterial = material;
-                            } else {
-                                // LOD2のテクスチャが粗い場合用にテクスチャから単色でMaterialを生成
-                                if (useColor) {
-                                    Color color = GetColorFromTexture(tex,bldgMaxColor);
-                                    //Debug.Log("Color "+color);
-                                    _building.color = SimpleColor(color);
-                                    CreateColorMaterial(_building.color,bldgX,"ColorBLDG");  
-                                }
-                            }
-                            //UnityEditor.AssetDatabase.CreateAsset( material,  );
-                            savefilename =  savedirPath+@"\"+fileNameWithoutExtension+".mat" ;
-                            var asset = UnityEditor.AssetDatabase.LoadAssetAtPath(savefilename,typeof(Material));
-                            if( asset == null){
-                                UnityEditor.AssetDatabase.CreateAsset( material, savefilename);
-                            }  
-
-                            //DestroyImmediate(tex, true);
-                            //DestroyImmediate(material, true);
                         }
                     }
-                    //tex = Resources.Load(loaddirPath+@"\"+fileNameWithoutExtension, typeof(Texture2D)) as Texture2D;
-                    //material = Resources.Load(loaddirPath+@"\"+fileNameWithoutExtension, typeof(Material)) as Material;  
-                } else { // テクスチャが読み込めた場合
-                    //Debug.Log("Load Material "+loaddirPath);
-                            if (useTexture) {
-                                var renderer = bldgX.GetComponent<Renderer>();
-                                material.mainTexture = tex;//
-                                renderer.sharedMaterial = material;
-                            }
-                            else 
-                            if (useColor) {
-                                Color color = GetColorFromTexture(tex,bldgMaxColor);
-                                //Debug.Log("Color "+color);                            
-                                _building.color = SimpleColor(color);    
-                                CreateColorMaterial(_building.color,bldgX,"ColorBLDG");                            
-                            }
-                }         
+                }
+                var renderer = bldgX.GetComponent<Renderer>();
+                Material materialC = null;
+                if (useColor) {
+                    // LOD2のテクスチャが粗い場合用にテクスチャから単色でMaterialを生成
+                    Color color = GetColorFromTexture(tex,bldgMaxColor);
+                    _building.color = SimpleColor(color);
+                    materialC = CreateColorMaterial(_building.color,bldgX,"ColorBLDG");  
+                }
+                if (useTexture)  {
+                    material = new Material(Shader.Find("Unlit/Texture"));
+                    material.mainTexture = tex;//
+                    //         var tempMaterial = new Material(renderer.sharedMaterial);
+                    //material.mainTexture = tex;
+                    renderer.sharedMaterial = material;
+                } else if (useColor) {
+                    renderer.sharedMaterial = materialC;
+                }
+                //UnityEditor.AssetDatabase.CreateAsset( material,  );
+                savefilename =  savedirPath+@"\"+fileNameWithoutExtension+".mat" ;
+                var asset = UnityEditor.AssetDatabase.LoadAssetAtPath(savefilename,typeof(Material));
+                if( asset == null){
+                    UnityEditor.AssetDatabase.CreateAsset( material, savefilename);
+                }  
             }
         } else { // テクスチャがない場合
             if (useColor) { // 色を付ける場合は フォルダの中にある色からランダムで選ぶ
-                string strcolor = bldgcolors[UnityEngine.Random.Range(bldgcolors.Length*2/3, bldgcolors.Length)];
+                string strcolor = bldgcolors[UnityEngine.Random.Range(0, bldgcolors.Length)];
                 Color color = GetColor(strcolor);
                 _building.color = color;//SimpleColor(color);    
-                CreateColorMaterial(_building.color,bldgX,"ColorBLDG");                   
+                Material material = CreateColorMaterial(_building.color,bldgX,"ColorBLDG");                   
+                var renderer = bldgX.GetComponent<Renderer>();
+                renderer.sharedMaterial = material;
                 
             } else {    // 色を付けない場合
                 if (bldgMaterial != null) { // マテリアルが指定されていればそのマテリアル
@@ -579,7 +558,10 @@ class UnityModelGenerator :ScriptableObject
                     meshRenderer.sharedMaterial = bldgMaterial;
                 } else {  // マテリアルがなければランダムな色   
                 //Debug.Log("Color "+_building.color);
-                    CreateColorMaterial(_building.color,bldgX,"Color");
+                    Material material = CreateColorMaterial(_building.color,bldgX,"Color");
+                    var renderer = bldgX.GetComponent<Renderer>();
+                    renderer.sharedMaterial = material;
+
                 //                bldgX.GetComponent<Renderer>().material.color = _building.color;
                 }
             }
@@ -662,7 +644,7 @@ class UnityModelGenerator :ScriptableObject
     }
 
     // 色からマテリアルを作る
-    void CreateColorMaterial(Color c, GameObject bldgX, string path){
+    Material CreateColorMaterial(Color c, GameObject bldgX, string path){
         int cr = (int)(c.r * 255);
         int cg = (int)(c.g * 255);
         int cb = (int)(c.b * 255);
@@ -685,10 +667,10 @@ class UnityModelGenerator :ScriptableObject
         Material material = Resources.Load(loaddirPath+@"\"+fileNameWithoutExtension, typeof(Material)) as Material;  
         if (material == null) {
             //Debug.Log("Create Material "+loaddirPath);
-            var renderer = bldgX.GetComponent<Renderer>();
+            // var renderer = bldgX.GetComponent<Renderer>();
             material = new Material(Shader.Find("Standard"));
             material.color = c;
-            renderer.sharedMaterial = material;
+            // renderer.sharedMaterial = material;
             //UnityEditor.AssetDatabase.CreateAsset( material,  savedirPath+@"\"+fileNameWithoutExtension+".mat" );
             string savefilename =  savedirPath+@"\"+fileNameWithoutExtension+".mat" ;
             var asset = UnityEditor.AssetDatabase.LoadAssetAtPath(savefilename,typeof(Material));
@@ -698,10 +680,10 @@ class UnityModelGenerator :ScriptableObject
             material = Resources.Load(loaddirPath+@"\"+fileNameWithoutExtension, typeof(Material)) as Material;  
         } else {
             //Debug.Log("Load Material "+loaddirPath);
-            var renderer = bldgX.GetComponent<Renderer>();
-            renderer.sharedMaterial = material;
+            // var renderer = bldgX.GetComponent<Renderer>();
+            // renderer.sharedMaterial = material;
         }         
-
+        return material;
     }
 
 }
@@ -737,8 +719,6 @@ public class DemBldgTranCreator : MonoBehaviour
     public string udxpath = @"C:\PLATEAU\40205_iizuka-shi_2020_citygml_5_op\40205_iizuka-shi_2020_citygml_x_op\udx\";//dem\50303564_dem_6697_op.gml";
     public string mapindex = "50303564";     // メッシュの番号　８桁の数字の文字列　
     public string basemapindex = "50303564";     // メッシュの番号　８桁の数字の文字列　
-    // C:\PLATEAU\34202_kure-shi_2020_citygml_3_op\udx\
-    // 51322484    
     public int xsize = 1;               // x（経度方向）に何ブロック生成するか
     public int zsize = 1;               // z（経度方向）に何ブロック生成するか
     public bool saveMeshAsAsset = false; // プレハブ化やパッケージ化するときはtrue
@@ -766,7 +746,7 @@ public class DemBldgTranCreator : MonoBehaviour
 
     [Space( 16)]
 
-    public bool bldgON = true;          // 建物を生成するならtrue
+    public bool bldgON = false;          // 建物を生成するならtrue
     public bool bldgLOD3 = false;          // LOD3の建物を生成するならtrue
     public bool bldgLOD2 = false;          // LOD2の建物を生成するならtrue
     public bool bldgUseCollider = false; // 建物にColliderをアタッチするならtrue
@@ -785,14 +765,13 @@ public class DemBldgTranCreator : MonoBehaviour
     public bool frnUseTexture = true;  // 都市設備に画像を貼るならtrue
     public int  frnTexsize = 256;       // テクスチャのサイズ
     public float frnOffsetY = 0.008f;   // 道路と重なりを避けるために上に少しあげる
-    public bool frnSplit = true;        // 分割するならtrue
-    //public Material frnMaterial;       // 画像を貼らない場合のMaterial
+    public bool frnSplit = false;        // 分割するならtrue
 
     [Space( 16)]
 
     public bool vegON = true;          // 植生を生成するならtrue
     public bool vegUseCollider = false; // 植生にColliderをアタッチするならtrue
-    private bool vegUseTexture = false;  // 植生に画像を貼るならtrue
+    //private bool vegUseTexture = false;  // 植生に画像を貼るならtrue
     //public Material vegMaterial;       // 画像を貼らない場合のMaterial
 
     [Space( 16)]
@@ -2906,7 +2885,7 @@ public class DemBldgTranCreator : MonoBehaviour
             Building b = vegs[i];
 //            UnityModelGenerator mg = new UnityModelGenerator(b, baseLowerCorner, vegUseCollider, vegUseTexture, vegMaterial);
 //            UnityModelGenerator mg = ScriptableObject.CreateInstance<UnityModelGenerator>();
-            mg.ModelInitialize(b, baseLowerCorner, vegUseCollider, vegUseTexture, null,bldgTexsize,saveMeshAsAsset);
+            mg.ModelInitialize(b, baseLowerCorner, vegUseCollider, false, null,bldgTexsize,saveMeshAsAsset);
             mg.Create(bldg,useAVGPosition,currentMapIndex);
             if (i > 601) {
                //break;
