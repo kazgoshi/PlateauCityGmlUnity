@@ -1,7 +1,11 @@
 # PlateauCityGmlUnity
 [こちらのリポジトリ](https://github.com/ksasao/PlateauCityGmlSharp)をUnityで直接CityGMLのファイルを読み込んで利用できるよう、Forkしたものです。
+
 追加機能として、地面のテクスチャを地理院地図の画像を自動ダウンロードして使用し、道路(TranのRoad)を地形の高さに合わせて生成します。
+
 2023/2/18 沼津のLOD3のBldg,Tran,Frn,Vegデータに対応しました。Coroutineを使用し生成を中断できるようにしました。
+
+2024/2/10 大阪のLOD3のエリアに対応しました。
 
 # 使い方
 
@@ -84,6 +88,8 @@
 ![生成結果1](img4.png)
 
 ![生成結果2](img5.png)
+
+![生成結果3](img6.png)
 
 # 一部のソースコードの引用元はWEBアーカイブより参照できます
 `Assets\DemBldgTranCreator.cs`
