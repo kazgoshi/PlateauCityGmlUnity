@@ -21,5 +21,8 @@ namespace PlateauCityGml
 
         public Color color { get; set; }
         public bool nocollider { get; set; } 
+        public string modelType  { get; set; } = "";
+        public string modelSubType  { get; set; } = "";
+        public int modelNumber  { get; set; }         
     }
 }

@@ -10,7 +10,8 @@ public class CorData
     public bool cor1finished = false;
     public EditorCoroutine coroutine2;  
     public bool cor2finished = false;
-
+    public EditorCoroutine coroutine3;  
+    public bool cor3finished = false;
 
 }   
 #endif

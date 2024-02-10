@@ -145,6 +145,7 @@ namespace PlateauCityGml
                             Debug.Log("GetBuildingsLOD3 "+reader.Name);////////
                             if (reader.Name == bldgBuilding)
                             {
+
                                 try
                                 {
                                     count++;
@@ -281,6 +282,7 @@ namespace PlateauCityGml
                             Debug.Log("GetBuildingsLOD2 "+reader.Name);////////
                             if (reader.Name == bldgBuilding)
                             {
+                                //Debug.Log("reader.Value !"+reader.Value);
                                 try
                                 {
                                     count++;
@@ -400,6 +402,7 @@ namespace PlateauCityGml
             XmlReaderSettings settings = new XmlReaderSettings();
             settings.IgnoreWhitespace = true;
             TextureInfo textures = null;
+            Dictionary<string, Color> matDic = null;               
             int iyd = 0;
             var sw = new System.Diagnostics.Stopwatch();
             sw.Start(); //計測開始
@@ -440,7 +443,9 @@ namespace PlateauCityGml
 
                             if (reader.Name == "app:appearanceMember")
                             {
-                                textures = ParseTextureInfo(reader, buildings);
+                                 (textures, matDic) = ParseInfo(reader);
+                                // textures = ParseTextureInfo(reader, buildings);
+                                // matDic = ParseMaterialInfoVEG(reader);       
                             }
                             break;
                         default:
@@ -466,6 +471,9 @@ namespace PlateauCityGml
                 // UVデータをビルデータにマージ
                 MargeData(buildings, textures);
             }
+            if (matDic != null) {
+                MargeDataMat(buildings, matDic);
+            }                
             sw.Stop(); //計測終了
             sw2.Stop(); //計測終了
             cordata.cor1finished = true;
@@ -593,6 +601,7 @@ namespace PlateauCityGml
                                 try
                                 {
                                     List<Building> newbuildings  = CreateTRANLOD3Multi(reader,fullPath);
+                                    Debug.Log("newbuildings.Count " + newbuildings.Count);
                                     if (newbuildings != null) buildings.AddRange(newbuildings);
                                 }
                                 catch(Exception ex)
@@ -798,6 +807,17 @@ namespace PlateauCityGml
 
             XmlDocument doc = new XmlDocument();
             var r2 = reader.ReadSubtree();
+            //reader.MoveToFirstAttribute();
+            //Debug.Log("reader "+reader.Name+" "+reader.Value);
+
+            if ( reader.HasAttributes) {
+                Debug.Log(".GetAttribute(0)); "+reader.GetAttribute(0));
+                building.Id = reader.GetAttribute(0);
+                // if (building.Id != "bldg_db06c11a-8e38-450c-8fd1-a78492933a44") 
+                // {
+                //     return null;
+                // }
+            }
             XmlNode cd = doc.ReadNode(r2);
             XmlNodeList member = cd.ChildNodes;
             Dictionary<string, Surface> surfaceDic = null;
@@ -956,8 +976,11 @@ namespace PlateauCityGml
             XmlNodeList member = cd.ChildNodes;
             Dictionary<string, Surface> surfaceDic = null;
             Dictionary<string, Surface> surfaceDicLOD3 = null;
-            Debug.Log("CreateFRN "+cd.Name+"  gml:id "+cd.Attributes["gml:id"]?.Value);
+            Debug.Log("! CreateFRN "+cd.Name+"  gml:id "+cd.Attributes["gml:id"]?.Value);
             building.Id = cd.Attributes["gml:id"]?.Value;
+            string id = cd.Attributes["gml:id"]?.Value;
+            //building.Id = cd.Attributes["gml:id"]?.Value+"="+node.FirstChild.Attributes["gml:id"].Value;
+            // Debug.Log("cd "+ cd.FirstChild.Attributes["gml:id"].Value);
             building.Name = building.Id;    
             bool split = true;        
             // if (building.Name!="FRN_8145ccfa-af0b-42c2-9598-64aba656a752"){// signal ランプ分割特殊
@@ -1095,6 +1118,10 @@ namespace PlateauCityGml
             {
                 if(node.Name== "frn:lod3Geometry")
                 {
+                    string test = node.FirstChild.Attributes["gml:id"]?.Value;
+                    Debug.Log("test "+test);
+                    building.Id = id+"="+test;
+                    building.Name = building.Id ;
                     UpdateSurfaceDicFRN(node,surfaceDicLOD3);
                     countLOD3++;
                     //Debug.Log(countLOD3);
@@ -1265,216 +1292,15 @@ namespace PlateauCityGml
             
             return buildings;
         }
-/*
 
-        public Building CreateVEG(XmlReader reader)
-        {
-            Building building = new Building();
-
-            XmlDocument doc = new XmlDocument();
-            var r2 = reader.ReadSubtree();
-            XmlNode cd = doc.ReadNode(r2);
-            XmlNodeList member = cd.ChildNodes;
-            Dictionary<string, Surface> surfaceDic = null;
-            Dictionary<string, Surface> surfaceDicLOD3 = null;
-            Debug.Log("CreateVEG "+cd.Name+"  gml:id "+cd.Attributes["gml:id"]?.Value);
-            building.Id = cd.Attributes["gml:id"]?.Value;
-            building.Name = building.Id;            
-            foreach (XmlNode node in member)
-            {
-                Debug.Log(node.Name);
-                if (node.Name== "veg:lod3Geometry"|| node.Name== "veg:lod3MultiSurface")
-                {
-                    surfaceDicLOD3 = GetPolyListVEG(node);
-                }
-            }
-            Debug.Log("end foreach1 " );
-            if (surfaceDic != null) Debug.Log(" LOD2 " + surfaceDic.Count);
-            if (surfaceDicLOD3 != null) Debug.Log(" LOD3 " + surfaceDicLOD3.Count);
-            int count = 0;
-            int countLOD3 = 0;
-            foreach (XmlNode node in member)
-            {
-                if(node.Name== "veg:lod3Geometry" || node.Name== "veg:lod3MultiSurface" )
-                {
-                    UpdateSurfaceDicVEG(node,surfaceDicLOD3);
-                    countLOD3++;
-                    Debug.Log(countLOD3);
-                }                
-
-            }
-            Debug.Log("end foreach2 " + count +" "+ countLOD3 );
-                        if(surfaceDicLOD3 != null)
-            {
-                Debug.Log("surfaceDicLOD3");
-                List<Surface> sList = new List<Surface>();
-                foreach (var d in surfaceDicLOD3.Keys)
-                {
-                    var s = surfaceDicLOD3[d];
-                    if (s != null && s.LowerCorner != Position.None)
-                    {
-                        sList.Add(s);
-                    }
-                }
-                building.LOD2Solid = sList.ToArray();
-                (Position lower, Position upper) = GetCorner(building.LOD2Solid);
-                // モデルの min側の角が領域内に入っていれば採用
-                if ( LowerCorner.Latitude < lower.Latitude && upper.Latitude < UpperCorner.Latitude
-                    && LowerCorner.Longitude < lower.Longitude && upper.Longitude < UpperCorner.Longitude)
-                {
-                    building.LowerCorner = lower;
-                    building.UpperCorner = upper;
-                }
-                else
-                {
-                    building.LOD2Solid = new Surface[] { };
-                }
-            } else // LOD2が指定されていない場合は null
-            if(surfaceDic != null)
-            {
-                List<Surface> sList = new List<Surface>();
-                foreach (var d in surfaceDic.Keys)
-                {
-                    var s = surfaceDic[d];
-                    if (s != null && s.LowerCorner != Position.None)
-                    {
-                        sList.Add(s);
-                    }
-                }
-                building.LOD2Solid = sList.ToArray();
-                (Position lower, Position upper) = GetCorner(building.LOD2Solid);
-
-                // モデルの min側の角が領域内に入っていれば採用
-                if ( LowerCorner.Latitude < lower.Latitude && upper.Latitude < UpperCorner.Latitude
-                    && LowerCorner.Longitude < lower.Longitude && upper.Longitude < UpperCorner.Longitude)
-                {
-                    building.LowerCorner = lower;
-                    building.UpperCorner = upper;
-                }
-                else
-                {
-                    building.LOD2Solid = new Surface[] { };
-                }
-            }
-            if(building.LOD1Solid != null && building.LOD2Solid == null)
-            {
-                (Position lower, Position upper) = GetCorner(building.LOD1Solid);
-                building.LowerCorner = lower;
-                building.UpperCorner = upper;
-            }
-                Debug.Log(building.LOD2Solid.Length);
-
-            return building;
-        }
-
-
-        public List<Building> CreateVEGMultiOLD(XmlReader reader, string fullPath)
-        {
-            List<Building> buildings = new List<Building>();
-
-            Building building = new Building();
-            building.GmlPath = fullPath;
-            
-            XmlDocument doc = new XmlDocument();
-            var r2 = reader.ReadSubtree();
-            XmlNode cd = doc.ReadNode(r2);
-            XmlNodeList member = cd.ChildNodes;
-            Dictionary<string, Surface> surfaceDic = null;
-            Dictionary<string, Surface> surfaceDicLOD3 = null;
-            Debug.Log("CreateVEG "+cd.Name+"  gml:id "+cd.Attributes["gml:id"]?.Value);
-            building.Id = cd.Attributes["gml:id"]?.Value;
-            building.Name = building.Id;            
-            foreach (XmlNode node in member)
-            {
-                Debug.Log(node.Name);
-                if (node.Name== "veg:lod3Geometry"|| node.Name== "veg:lod3MultiSurface")
-                {
-                    surfaceDicLOD3 = GetPolyListVEG(node);
-                }
-            }
-            Debug.Log("end foreach1 " );
-            if (surfaceDic != null) Debug.Log(" LOD2 " + surfaceDic.Count);
-            if (surfaceDicLOD3 != null) Debug.Log(" LOD3 " + surfaceDicLOD3.Count);
-            int count = 0;
-            int countLOD3 = 0;
-            foreach (XmlNode node in member)
-            {
-                if(node.Name== "veg:lod3Geometry" || node.Name== "veg:lod3MultiSurface" )
-                {
-                    UpdateSurfaceDicVEG(node,surfaceDicLOD3);
-                    countLOD3++;
-                    Debug.Log(countLOD3);
-                }                
-            }
-            Debug.Log("end foreach2 " + count +" "+ countLOD3 );
-                        if(surfaceDicLOD3 != null)
-            {
-                Debug.Log("surfaceDicLOD3");
-                List<Surface> sList = new List<Surface>();
-                foreach (var d in surfaceDicLOD3.Keys)
-                {
-                    var s = surfaceDicLOD3[d];
-                    if (s != null && s.LowerCorner != Position.None)
-                    {
-                        sList.Add(s);
-                    }
-                }
-                building.LOD2Solid = sList.ToArray();
-                (Position lower, Position upper) = GetCorner(building.LOD2Solid);
-                // モデルの min側の角が領域内に入っていれば採用
-                if ( LowerCorner.Latitude < lower.Latitude && upper.Latitude < UpperCorner.Latitude
-                    && LowerCorner.Longitude < lower.Longitude && upper.Longitude < UpperCorner.Longitude)
-                {
-                    building.LowerCorner = lower;
-                    building.UpperCorner = upper;
-                }
-                else
-                {
-                    building.LOD2Solid = new Surface[] { };
-                }
-            } else // LOD2が指定されていない場合は null
-            if(surfaceDic != null)
-            {
-                List<Surface> sList = new List<Surface>();
-                foreach (var d in surfaceDic.Keys)
-                {
-                    var s = surfaceDic[d];
-                    if (s != null && s.LowerCorner != Position.None)
-                    {
-                        sList.Add(s);
-                    }
-                }
-                building.LOD2Solid = sList.ToArray();
-                (Position lower, Position upper) = GetCorner(building.LOD2Solid);
-
-                // モデルの min側の角が領域内に入っていれば採用
-                if ( LowerCorner.Latitude < lower.Latitude && upper.Latitude < UpperCorner.Latitude
-                    && LowerCorner.Longitude < lower.Longitude && upper.Longitude < UpperCorner.Longitude)
-                {
-                    building.LowerCorner = lower;
-                    building.UpperCorner = upper;
-                }
-                else
-                {
-                    building.LOD2Solid = new Surface[] { };
-                }
-            }
-            if(building.LOD1Solid != null && building.LOD2Solid == null)
-            {
-                (Position lower, Position upper) = GetCorner(building.LOD1Solid);
-                building.LowerCorner = lower;
-                building.UpperCorner = upper;
-            }
-                Debug.Log(building.LOD2Solid.Length);
-            buildings.Add(building);
-            return buildings;
-        }
-*/
 
         public List<Building> CreateVEGMulti(XmlReader reader, string fullPath)
         {
             //if (reader.Name == "veg:PlantCover" || reader.Name == "veg:SolitaryVegetationObject")
             List<Building> buildings = new List<Building>();
+            string modelType = reader.Name;
+            Debug.Log("modelType"+modelType);
+
 
 
             
@@ -1484,10 +1310,16 @@ namespace PlateauCityGml
             XmlNodeList member = cd.ChildNodes;
             Dictionary<string, Surface> surfaceDicLOD3 = null;
             Debug.Log("CreateVEG "+cd.Name+"  gml:id "+cd.Attributes["gml:id"]?.Value);
-
+            int modelNumber = 0;
+            float height = -1;
             //if (cd.Attributes["gml:id"]?.Value != "VEG_063bb4fb-b6e8-4e5a-9ec2-57e0ecef785d") return null;
             foreach (XmlNode node1 in member)
             {
+                if (node1.Name== "veg:height")
+                {
+                    Debug.Log(node1.InnerText);
+                    height = float.Parse(node1.InnerText);
+                }
                 //Debug.Log(node1.Name);
                 if (node1.Name== "veg:lod3Geometry"|| node1.Name== "veg:lod3MultiSurface")
                 {
@@ -1496,8 +1328,13 @@ namespace PlateauCityGml
                     {
                         Building building = new Building();
                         building.GmlPath = fullPath;
-                        building.Id = cd.Attributes["gml:id"]?.Value+"="+node.FirstChild.Attributes["gml:id"].Value;
+                        building.Id = cd.Attributes["gml:id"]?.Value+"="+node.FirstChild.Attributes["gml:id"].Value+"="+modelNumber;
                         building.Name = building.Id;    
+                        building.modelType = modelType;
+                        building.Height = height;
+                        building.modelNumber = modelNumber;
+                        modelNumber++;
+
                         //Debug.Log("building.Id" + building.Id);
                         surfaceDicLOD3 = GetSurfaceDicVEG(node);
                         if(surfaceDicLOD3 != null)
@@ -1545,9 +1382,12 @@ namespace PlateauCityGml
             Dictionary<string, Surface> surfaceDicLOD3 = null;
             Debug.Log("CreateTRANLOD3Multi "+cd.Name+"  gml:id "+cd.Attributes["gml:id"]?.Value);
 
-
+//tran_d1615ca3-0bab-43ec-b7ac-7d917a766faf
+//**************************************************************************************************
 
             //if (cd.Attributes["gml:id"]?.Value != "VEG_063bb4fb-b6e8-4e5a-9ec2-57e0ecef785d") return null;
+            //if (cd.Attributes["gml:id"]?.Value != "tran_d1615ca3-0bab-43ec-b7ac-7d917a766faf") return null;
+            
             foreach (XmlNode node2 in member)
             {
                 //Debug.Log("node2 "+node2.Name);
@@ -1560,69 +1400,130 @@ namespace PlateauCityGml
                                     building.GmlPath = fullPath;
 
 
-                                                                            List<Surface> sList = new List<Surface>();
+                        List<Surface> sList = new List<Surface>();
 
 
                         if (node1.Name== "tran:lod3MultiSurface")
                         {
-                            //Debug.Log("node1.FirstChild.ChildNodes "+node1.FirstChild.ChildNodes.Count);
-                            foreach (XmlNode node0 in node1.FirstChild.FirstChild.ChildNodes)///CompositeSurface
-                            {
-                                foreach (XmlNode node in node0.ChildNodes)///SurfaceMember
-                                {
-                                    // Building building = new Building();
-                                    // building.GmlPath = fullPath;
-                                    // building.Id = cd.Attributes["gml:id"]?.Value+"="+node.FirstChild.Attributes["gml:id"].Value;
-                                    // building.Name = building.Id;    
-                                    // Debug.Log("building.Id" + building.Id);
-                                    id2 = node.FirstChild.Attributes["gml:id"].Value;
-                                    surfaceDicLOD3 = GetSurfaceDicTRANLOD3(node);
-                                    if(surfaceDicLOD3 != null)
+                            Debug.Log("tran:lod3MultiSurface");
+                            Debug.Log("node1.FirstChild.ChildNodes "+node1.FirstChild.ChildNodes.Count);
+                            // if (node1.FirstChild.ChildNodes.Count==1) {
+                            //     foreach (XmlNode node0 in node1.FirstChild.FirstChild.ChildNodes)///CompositeSurface
+                            //     {
+                            //         Debug.Log("node0.Name "+node0.Name);
+                            //         Debug.Log("node0.ChildNodes.Count "+node0.ChildNodes.Count);
+                            //         foreach (XmlNode node in node0.ChildNodes)///SurfaceMember
+                            //         {
+                            //             // Building building = new Building();
+                            //             // building.GmlPath = fullPath;
+                            //             // building.Id = cd.Attributes["gml:id"]?.Value+"="+node.FirstChild.Attributes["gml:id"].Value;
+                            //             // building.Name = building.Id;    
+                            //             Debug.Log("building.Id" + building.Id);
+                            //             id2 = node.FirstChild.Attributes["gml:id"].Value;
+                            //             // Debug.Log("id2 "+id2);
+                            //             surfaceDicLOD3 = GetSurfaceDicTRANLOD3(node);
+                            //             if(surfaceDicLOD3 != null)
+                            //             {
+                            //                 //Debug.Log("surfaceDicLOD3");
+                            //                 // List<Surface> sList = new List<Surface>();
+                            //                 foreach (var d in surfaceDicLOD3.Keys)
+                            //                 {
+                            //                     var s = surfaceDicLOD3[d];
+                            //                     if (s != null) // && s.LowerCorner != Position.None)
+                            //                     {
+                            //                         sList.Add(s);
+                            //                     }
+                            //                 }
+                            //             } 
+                            //         }
+                            //     }
+                            // } else {
+                                    foreach (XmlNode node in node1.FirstChild.ChildNodes)///SurfaceMember
                                     {
-                                        //Debug.Log("surfaceDicLOD3");
-                                        // List<Surface> sList = new List<Surface>();
-                                        foreach (var d in surfaceDicLOD3.Keys)
-                                        {
-                                            var s = surfaceDicLOD3[d];
-                                            if (s != null && s.LowerCorner != Position.None)
-                                            {
-                                                sList.Add(s);
-                                            }
+                                        // Building building = new Building();
+                                        // building.GmlPath = fullPath;
+                                        // building.Id = cd.Attributes["gml:id"]?.Value+"="+node.FirstChild.Attributes["gml:id"].Value;
+                                        // building.Name = building.Id;    
+                                        // Debug.Log("building.Id" + building.Id);
+
+                                        // id2 = node.FirstChild.Attributes["gml:id"].Value;
+                                        // Debug.Log("id2 "+id2);
+                                        // surfaceDicLOD3 = GetSurfaceDicTRANLOD3(node);
+                                        // if(surfaceDicLOD3 != null)
+                                        // {
+                                        //     //Debug.Log("surfaceDicLOD3");
+                                        //     // List<Surface> sList = new List<Surface>();
+                                        //     foreach (var d in surfaceDicLOD3.Keys)
+                                        //     {
+                                        //         var s = surfaceDicLOD3[d];
+                                        //         if (s != null)// && s.LowerCorner != Position.None)
+                                        //         {
+                                        //             sList.Add(s);
+                                        //         }
+                                        //     }
+                                        // } 
+                                        if (node.FirstChild.Name == "gml:Polygon") { 
+                                            id2 = node.FirstChild.Attributes["gml:id"].Value;
                                         }
-                                    //     building.LOD2Solid = sList.ToArray();
-                                    //     (Position lower, Position upper) = GetCorner(building.LOD2Solid);
-                                    //     // モデルの min側の角が領域内に入っていれば採用
-                                    // //if ( LowerCorner.Latitude < lower.Latitude && upper.Latitude < UpperCorner.Latitude
-                                    // //     && LowerCorner.Longitude < lower.Longitude && upper.Longitude < UpperCorner.Longitude)
-                                    //     {
-                                    //         building.LowerCorner = lower;
-                                    //         building.UpperCorner = upper;
-                                    //         Debug.Log(building.LOD2Solid.Length);
-                                    //         buildings.Add(building);
-                                    //     }
-                                    } 
-                                }
+                                        if (node.FirstChild.Name == "gml:CompositeSurface"){
+                                            id2 = node.FirstChild.FirstChild.FirstChild.Attributes["gml:id"].Value;
+                                        }
+                                        Debug.Log("id2 "+id2);
+                                        surfaceDicLOD3 = GetSurfaceDicTRANLOD3(node);
+                                        if(surfaceDicLOD3 != null)
+                                        {
+                                            //Debug.Log("surfaceDicLOD3");
+                                            // List<Surface> sList = new List<Surface>();
+                                            foreach (var d in surfaceDicLOD3.Keys)
+                                            {
+                                                var s = surfaceDicLOD3[d];
+                                                if (s != null)// && s.LowerCorner != Position.None)
+                                                {
+                                                    sList.Add(s);
+                                                }
+                                            }
+                                        } 
+                                    }
+
+                                                           
+                            //}
+                            Debug.Log("sList.Count "+sList.Count);
+                            if (sList.Count >0) {
+                                building.Id = cd.Attributes["gml:id"]?.Value+"="+id2;//node.FirstChild.Attributes["gml:id"].Value;
+                                building.Name = building.Id;    
+                                //Debug.Log("building.Id" + building.Id);            
+                                    building.LOD2Solid = sList.ToArray();
+                                    (Position lower, Position upper) = GetCorner(building.LOD2Solid);
+                                    // モデルの min側の角が領域内に入っていれば採用
+                                //if ( LowerCorner.Latitude < lower.Latitude && upper.Latitude < UpperCorner.Latitude
+                                //     && LowerCorner.Longitude < lower.Longitude && upper.Longitude < UpperCorner.Longitude)
+                                    {
+                                        building.LowerCorner = lower;
+                                        building.UpperCorner = upper;
+                                        //Debug.Log(building.LOD2Solid.Length);
+                                        buildings.Add(building);
+                                    }                                
                             }
                         }
-                                    building.Id = cd.Attributes["gml:id"]?.Value+"="+id2;//node.FirstChild.Attributes["gml:id"].Value;
-                                    building.Name = building.Id;    
-                                    //Debug.Log("building.Id" + building.Id);            
-                                        building.LOD2Solid = sList.ToArray();
-                                        (Position lower, Position upper) = GetCorner(building.LOD2Solid);
-                                        // モデルの min側の角が領域内に入っていれば採用
-                                    //if ( LowerCorner.Latitude < lower.Latitude && upper.Latitude < UpperCorner.Latitude
-                                    //     && LowerCorner.Longitude < lower.Longitude && upper.Longitude < UpperCorner.Longitude)
-                                        {
-                                            building.LowerCorner = lower;
-                                            building.UpperCorner = upper;
-                                            //Debug.Log(building.LOD2Solid.Length);
-                                            buildings.Add(building);
-                                        }
+                        // building.Id = cd.Attributes["gml:id"]?.Value+"="+id2;//node.FirstChild.Attributes["gml:id"].Value;
+                        // building.Name = building.Id;    
+                        // //Debug.Log("building.Id" + building.Id);            
+                        //     building.LOD2Solid = sList.ToArray();
+                        //     (Position lower, Position upper) = GetCorner(building.LOD2Solid);
+                        //     // モデルの min側の角が領域内に入っていれば採用
+                        // //if ( LowerCorner.Latitude < lower.Latitude && upper.Latitude < UpperCorner.Latitude
+                        // //     && LowerCorner.Longitude < lower.Longitude && upper.Longitude < UpperCorner.Longitude)
+                        //     {
+                        //         building.LowerCorner = lower;
+                        //         building.UpperCorner = upper;
+                        //         //Debug.Log(building.LOD2Solid.Length);
+                        //         buildings.Add(building);
+                        //     }
 
 
                     }
             }
-
+            Debug.Log("CreateTRANLOD3Multi end "+buildings.Count);
             return buildings;
         }
 
@@ -1670,11 +1571,11 @@ namespace PlateauCityGml
                 string posStr = list[i].FirstChild.FirstChild.FirstChild.FirstChild.FirstChild.Value;
 
                 s.SetPositions(Position.ParseString(posStr));
-                if (LowerCorner.Latitude < s.LowerCorner.Latitude && LowerCorner.Longitude < s.LowerCorner.Longitude
-                    && s.UpperCorner.Latitude < UpperCorner.Latitude && s.UpperCorner.Longitude < UpperCorner.Longitude)
-                {
+                // if (LowerCorner.Latitude < s.LowerCorner.Latitude && LowerCorner.Longitude < s.LowerCorner.Longitude
+                //     && s.UpperCorner.Latitude < UpperCorner.Latitude && s.UpperCorner.Longitude < UpperCorner.Longitude)
+                // {
                     surfaces.Add(s);
-                }
+                // }
             }
             return surfaces.ToArray();
         }
@@ -1706,7 +1607,7 @@ namespace PlateauCityGml
         }
         private void UpdateSurfaceDicFRN(XmlNode node, Dictionary<string, Surface> polyDic)
         {
-            //Debug.Log("F "+node.FirstChild.Name);
+            Debug.Log("F "+node.FirstChild.Name);
             //Debug.Log("FF "+node.FirstChild.FirstChild.Name);
             // 名前に対応する頂点リストを取得する
             //XmlNode n = node.FirstChild.FirstChild.FirstChild?.FirstChild?.FirstChild;
@@ -1861,6 +1762,8 @@ namespace PlateauCityGml
                 list = node.FirstChild.ChildNodes;//<gml:surfaceMember>
             } else if (node.FirstChild?.FirstChild?.FirstChild?.Name == "gml:CompositeSurface") {
                 list = node.FirstChild?.FirstChild?.FirstChild?.ChildNodes;//<gml:surfaceMember>
+            } else if (node.FirstChild.Name == "gml:MultiSurface") {
+                list = node.FirstChild.ChildNodes;//<gml:surfaceMember>                
             }  else {
                 Debug.Log("Error ");
                 return null;
@@ -1898,7 +1801,81 @@ namespace PlateauCityGml
             return dic;
         }
 
+        private (TextureInfo t,Dictionary<string, Color> d) ParseInfo(XmlReader reader)
+        {
 
+            var map = new Dictionary<string, (int index, Vector2[] uv)>();
+            List<string> textureFiles = new List<string>();
+
+            Dictionary<string, Color>  matDic = new Dictionary<string, Color> ();
+
+            XmlDocument doc = new XmlDocument();
+            var r2 = reader.ReadSubtree();
+            XmlNode cd = doc.ReadNode(r2);
+            XmlNodeList list = cd.FirstChild.ChildNodes;
+            int count = list.Count;
+            //Debug.Log("ParseTextureInfo "+count);
+            for(int i = 0;i < count; i++) {
+                if (list[i].Name == "app:surfaceDataMember") // 1枚のテクスチャに紐づくUV
+                {
+                    if (list[i].FirstChild.Name == "app:ParameterizedTexture"){
+//                        Debug.Log(i+" "+list[i].Name);
+                        XmlNodeList uv = list[i].FirstChild.ChildNodes;
+                        for(int j=0; j<uv.Count; j++)
+                        {
+                            if (uv[j].Name == "app:target")
+                            {
+                                // UVデータを登録
+                                string uri = uv[j]?.Attributes["uri"]?.Value;
+                                if (uri==null) {
+                                    return (null,null);
+                                }
+                                uri = uri.Substring(1);
+                                string texString = uv[j].FirstChild.FirstChild.FirstChild.Value;
+                                map.Add(uri,(textureFiles.Count-1, ConvertToUV(texString)));
+                                continue;
+                            }
+
+                            if (uv[j].Name == "app:imageURI")
+                            {
+                                string file = uv[j].FirstChild.Value;
+                                textureFiles.Add(file);
+                                //Debug.Log("URI "+file);
+                                continue;
+                            }
+                        }
+                    } else {
+                        XmlNodeList node = list[i].FirstChild.ChildNodes;
+                        Color c = new Color();
+                        for(int j=0; j<node.Count; j++)
+                        {
+                            //Debug.Log("node[j].Name " +j+" "+node[j].Name);
+                            if (node[j].Name == "app:diffuseColor")
+                            {
+                                //Debug.Log(node[j].InnerText);
+                                string[] items = node[j].InnerText.Split(' ');
+                                if (items.Length == 3) {
+                                    c = new Color(float.Parse(items[0]),float.Parse(items[1]),float.Parse(items[2]),1);
+                                }
+                            }                        
+                            if (node[j].Name == "app:target")
+                            {
+                                string name = node[j].InnerText.Substring(1);
+                                Debug.Log("app:target "+name +"  "+c);
+                                if (c != null && !matDic.ContainsKey(name)) {
+                                    
+                                    matDic.Add(name, c);
+                                }
+                            }
+                        }                        
+                    }
+
+                }
+            }
+            //Debug.Log("return");
+//            return null;
+            return (new TextureInfo { Files = textureFiles, Map = map }, matDic);
+        }
         private TextureInfo ParseTextureInfo(XmlReader reader, List<Building> buildings)
         {
 
@@ -1979,7 +1956,7 @@ namespace PlateauCityGml
                         if (node[j].Name == "app:target")
                         {
                             string name = node[j].InnerText.Substring(1);
-                            //Debug.Log("app:target "+name +"  "+c);
+                            Debug.Log("app:target "+name +"  "+c);
                             if (c != null && !matDic.ContainsKey(name)) {
                                 
                                 matDic.Add(name, c);
@@ -2079,17 +2056,21 @@ namespace PlateauCityGml
         }
         private void MargeDataMat(List<Building> buildings, Dictionary<string, Color> matDic)
         {
-            //Debug.Log("MargeDataMat "+ matDic.Count);
+            Debug.Log("MargeDataMat "+ matDic.Count);
             foreach(var b in buildings)
             {
+                // Debug.Log("b.Id "+b.Id+ " ");
                 string [] id2 = b.Id.Split("=");
-                //Debug.Log("b.Id "+b.Id+ " "+id2[1]);
-                if (matDic.ContainsKey(id2[1]))
+                // Debug.Log("b.Id "+b.Id+ " "+id2[1]);
+                string key; // key = id2[1]
+                // key = b.Id;
+                key = id2[1];
+                if (matDic.ContainsKey(key))
                 {
-                    b.color = matDic[id2[1]];
-                    //Debug.Log("Color "+ id2[1]+" "+b.color);
+                    b.color = matDic[key];
+                    // Debug.Log("Color "+ key+" "+b.color);
                 } else {
-                    //Debug.Log("Color not found "+ id2[1]);
+                    // Debug.Log("Color not found "+key);
                 }            
                 
                 // if(b.LOD2Solid == null)
