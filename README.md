@@ -32,23 +32,29 @@
 
 '''
 
-    public string udxpath = @"C:\PLATEAU\40205_iizuka-shi_2020_citygml_5_op\40205_iizuka-shi_2020_citygml_x_op\udx\";
-    public string mapindex = "50303564";     // メッシュの番号　８桁の数字の文字列　
-    public string basemapindex = "50303564";     // メッシュの番号　８桁の数字の文字列　
+
+    public string udxpath = @"C:\PLATEAU\40205_iizuka-shi_2020_citygml_5_op\40205_iizuka-shi_2020_citygml_x_op\udx\";//dem\50303564_dem_6697_op.gml";
+    public string basemapindex = "50303564";     // メッシュの番号　８桁の数字の文字列　(0,0,0)の基準位置
+    public string zeromapindex = "50303564";     // メッシュの番号　８桁の数字の文字列　左下（南西）の位置
     public int xsize = 1;               // x（経度方向）に何ブロック生成するか
-    public int zsize = 1;               // z（緯度方向）に何ブロック生成するか
-    public bool saveMeshAsAsset = false; // プレハブ化やパッケージ化するときはtrue
+    public int zsize = 1;               // z（経度方向）に何ブロック生成するか
+    public bool saveMeshAsAsset = false; // プレハブ化やパッケージ化するときはtrue　かなり時間がかかるのでfalseでいろいろ試して最後にtrueに
     public bool useAVGPosition = true; // 建物の位置をMeshの平均（yはMin）に
     
+    [Space( 16)]
     public bool roadON = false;          // 道路を生成するならtrue
     public bool roadLOD3 = false;          // LOD3の道路を生成するならtrue
-    public bool roadLOD2 = false;          // LOD2の道路を生成するならtrue
-    public bool roadLOD2Array = false;          // 地面の高さの配列で高さを平均化するならtrue meshcodeが8桁の道路のみ　6桁は地面の高さから直接
-    public float roadLOD2SplitLength = 5;    // 長い1辺のときの分割する長さ(m)
-    public float roadLOD2MargeLength = 0.5f; // 近い点をまとめる長さ(m) // 別の面との同一点はみてないのでギャップがおこるかも。
-    public bool roadLOD2SlowButGood = false; // よりよい分割（とりあえず長さが最小
+    public bool roadLOD1 = false;          // LOD1の道路を生成するならtrue
+    public float rayHeight = 1000;
+    public bool roadLOD1Array = false;          // 地面の高さの配列で高さを平均化するならtrue meshcodeが8桁の道路のみ　6桁は地面の高さから直接
+    public float roadLOD1SplitLength = 0;    // 長い1辺のときの分割する長さ(m) 5
+    public float roadLOD1MargeLength = 0.5f; // 近い点をまとめる長さ(m) // 別の面との同一点はみてないのでギャップがおこるかも。
+    public bool roadLOD1SlowButGood = false; // よりよい分割（とりあえず長さが最小
     public bool roadUseCollider = false; // Colliderをアタッチするならtrue    
     public Material roadMaterial;       // 道のMaterial
+
+
+    [Space( 16)]
 
     public bool demON = true;           // 地形を生成するならtrue
     public bool demUseCollider = true;   // 地形にColliderをアタッチするならtrue
@@ -56,7 +62,9 @@
     public bool demAdjustRoad = true;   // 地形を道路等の高さに合わせるて下げるならtrue    
     public Material demMaterial;        // 画像を貼らない場合のMaterial
 
-    public bool bldgON = true;          // 建物を生成するならtrue
+    [Space( 16)]
+
+    public bool bldgON = false;          // 建物を生成するならtrue
     public bool bldgLOD3 = false;          // LOD3の建物を生成するならtrue
     public bool bldgLOD2 = false;          // LOD2の建物を生成するならtrue
     public bool bldgUseCollider = false; // 建物にColliderをアタッチするならtrue
@@ -68,16 +76,23 @@
     public int bldgTexsize = 256;       // テクスチャのサイズ
     public Material bldgMaterial;       // 画像を貼らない場合のMaterial
 
+    [Space( 16)]
+
     public bool frnON = true;          // 都市設備を生成するならtrue
     public bool frnUseCollider = false; // 都市設備にColliderをアタッチするならtrue
     public bool frnUseTexture = true;  // 都市設備に画像を貼るならtrue
     public int  frnTexsize = 256;       // テクスチャのサイズ
-    public float frnOffsetY = 0.008f;   // 道路と重なりを避けるために上に少しあげる
-    public bool frnSplit = true;        // 分割するならtrue
+    public float frnOffsetY = 0.009f;   // 道路と重なりを避けるために上に少しあげる
+    public bool frnSplit = false;        // 分割するならtrue
+
+    [Space( 16)]
 
     public bool vegON = true;          // 植生を生成するならtrue
     public bool vegUseCollider = false; // 植生にColliderをアタッチするならtrue
-    private bool vegUseTexture = false;  // 植生に画像を貼るならtrue
+    public Material vegPlantCoverMaterial;       // 画像を貼る場合のMaterial tileは100に
+    public GameObject vegTreePrefab;
+    public int vegTreePrefabNumber = 1; // 大阪は0 沼津は1 幹と葉の幹に合わせる
+    public float vegTreePrefabHeight;
 
 '''
 
