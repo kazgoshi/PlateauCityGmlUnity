@@ -1,5 +1,6 @@
 # PlateauCityGmlUnity
 [こちらのリポジトリ](https://github.com/ksasao/PlateauCityGmlSharp)をUnityで直接CityGMLのファイルを読み込んで利用できるよう、Forkしたものです。
+[https://github.com/kazgoshi/PlateauCityGmlUnity](https://github.com/kazgoshi/PlateauCityGmlUnity)
 
 追加機能として、地面のテクスチャを地理院地図の画像を自動ダウンロードして使用し、道路(TranのRoad)を地形の高さに合わせて生成します。
 
